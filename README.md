@@ -1,10 +1,11 @@
 # Hello-world-
 Hello world 
 
-## Firefly Snake
+## Quiz Night
 
-A small browser game in [`game/index.html`](game/index.html). Open the file in any browser and steer the snake to catch fireflies.
+A question-and-answer quiz game in [`game/index.html`](game/index.html). Open the file in any browser to play.
 
-- Arrow keys or WASD to steer, Space to pause
-- On phones: swipe on the board or use the on-screen arrows
-- Every fifth firefly speeds things up; your best score is saved in the browser
+- Pick a topic (Science, Geography, History, Sports, Fun facts, or Mixed)
+- Answer 10 multiple-choice questions, 20 seconds each
+- 100 points per correct answer plus a speed bonus; your best score is saved in the browser
+- Click an answer or press A–D / 1–4
