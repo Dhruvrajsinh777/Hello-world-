@@ -1,0 +1,11 @@
+{
+  "name": "local-used-car-app",
+  "version": "0.1.0",
+  "description": "Local used car buy & sell marketplace (MVP): buyer, seller, inspector and admin apps",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  }
+}

@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# App data (SQLite database, uploaded photos)
+data/
+node_modules/
