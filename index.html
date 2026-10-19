@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kurukshetra: Dharma Yuddha</title>
+<style>
+  :root {
+    --bg: #1a0f0a;
+    --panel: #2a1810;
+    --panel-2: #3a2216;
+    --gold: #f4c542;
+    --saffron: #ff9933;
+    --red: #d9352b;
+    --green: #4caf50;
+    --blue: #4aa3df;
+    --text: #f6e7c8;
+    --muted: #b89f7a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--text);
+    background: radial-gradient(ellipse at top, #4a2412 0%, var(--bg) 60%);
+    display: flex;
+    justify-content: center;
+  }
+  #app { width: 100%; max-width: 960px; padding: 16px; }
+  h1 {
+    text-align: center;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin: 8px 0 0;
+    text-shadow: 0 0 12px rgba(255, 153, 51, .6);
+  }
+  .subtitle { text-align: center; color: var(--muted); margin: 4px 0 20px; font-style: italic; }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fade .4s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid #6b4423;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .5);
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .hero-card { cursor: pointer; transition: transform .15s, border-color .15s; text-align: center; }
+  .hero-card:hover, .hero-card:focus { transform: translateY(-4px); border-color: var(--gold); outline: none; }
+  .hero-card .icon { font-size: 52px; }
+  .hero-card h3 { margin: 6px 0 2px; color: var(--gold); }
+  .hero-card .role { color: var(--saffron); font-size: 13px; margin-bottom: 8px; }
+  .hero-card p { font-size: 13px; color: var(--muted); margin: 6px 0; }
+  .hero-card ul { text-align: left; font-size: 12px; padding-left: 18px; margin: 8px 0 0; }
+
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: linear-gradient(180deg, #8a4b1c, #5e3011);
+    border: 1px solid var(--saffron);
+    border-radius: 8px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  button:hover:not(:disabled) { filter: brightness(1.25); }
+  button:active:not(:disabled) { transform: scale(.97); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .center { text-align: center; }
+
+  /* Battle */
+  .stage-label { text-align: center; color: var(--saffron); margin-bottom: 10px; letter-spacing: 1px; }
+  .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+  .vs { font-size: 28px; color: var(--gold); font-weight: bold; }
+  .fighter { position: relative; text-align: center; }
+  .fighter .icon { font-size: 64px; display: inline-block; transition: transform .2s; }
+  .fighter .name { font-size: 20px; color: var(--gold); margin-top: 4px; }
+  .fighter .title { font-size: 12px; color: var(--muted); font-style: italic; }
+  .bar { height: 16px; background: #120a06; border-radius: 8px; overflow: hidden; margin-top: 8px; position: relative; border: 1px solid #000; }
+  .bar .fill { height: 100%; transition: width .4s ease; }
+  .bar .label { position: absolute; inset: 0; font-size: 11px; line-height: 16px; text-shadow: 0 0 3px #000; }
+  .hp .fill { background: linear-gradient(90deg, #a01f17, var(--red)); }
+  .hp .shield { position: absolute; top: 0; height: 100%; background: rgba(74, 163, 223, .55); transition: width .4s; }
+  .en .fill { background: linear-gradient(90deg, #b8860b, var(--gold)); }
+  .statuses { min-height: 22px; margin-top: 6px; font-size: 12px; display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+  .status { background: #120a06; border: 1px solid #6b4423; border-radius: 10px; padding: 1px 7px; }
+
+  .hit { animation: shake .35s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px) rotate(-4deg); }
+    75% { transform: translateX(8px) rotate(4deg); }
+  }
+  .lunge-right { transform: translateX(30px) scale(1.15); }
+  .lunge-left { transform: translateX(-30px) scale(1.15); }
+  .float {
+    position: absolute; left: 50%; top: 10px;
+    font-weight: bold; font-size: 22px;
+    pointer-events: none;
+    animation: floatUp 1.1s ease-out forwards;
+    text-shadow: 0 0 4px #000;
+  }
+  .float.dmg { color: #ff5a4e; }
+  .float.heal { color: #7cff7c; }
+  .float.info { color: var(--blue); font-size: 16px; }
+  @keyframes floatUp { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -60px); } }
+
+  .moves { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 16px; }
+  .move { text-align: left; padding: 10px 12px; }
+  .move .mname { font-weight: bold; color: var(--gold); }
+  .move .meta { float: right; font-size: 12px; color: var(--saffron); }
+  .move .mdesc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .move kbd { font-size: 10px; border: 1px solid var(--muted); border-radius: 3px; padding: 0 4px; margin-right: 4px; color: var(--muted); }
+
+  .log {
+    margin-top: 16px; height: 150px; overflow-y: auto;
+    font-size: 13px; line-height: 1.5;
+    background: #120a06; border-radius: 8px; padding: 10px; border: 1px solid #3a2216;
+  }
+  .log .p { color: #ffd27f; }
+  .log .e { color: #ff9b8f; }
+  .log .s { color: var(--muted); font-style: italic; }
+
+  .story { max-width: 640px; margin: 0 auto; text-align: center; }
+  .story .icon { font-size: 72px; }
+  .story blockquote { color: var(--gold); font-style: italic; border-left: 3px solid var(--saffron); margin: 16px auto; padding: 4px 14px; text-align: left; }
+  .boons { margin-top: 16px; }
+  .boon { text-align: center; }
+  .boon .icon { font-size: 36px; }
+
+  @media (max-width: 600px) {
+    .arena { grid-template-columns: 1fr; }
+    .vs { text-align: center; }
+    .fighter .icon { font-size: 48px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>⚔️ KURUKSHETRA ⚔️</h1>
+  <div class="subtitle">Dharma Yuddha — the war of righteousness</div>
+
+  <!-- Title / hero select -->
+  <section id="select" class="screen active">
+    <div class="card story" style="margin-bottom:18px">
+      <p>The conch shells have sounded. On the field of Kurukshetra the Pandavas face the hundred Kauravas
+         and their mighty champions. Choose your warrior and fight six great battles to restore dharma.</p>
+    </div>
+    <div id="heroGrid" class="grid"></div>
+  </section>
+
+  <!-- Story between battles -->
+  <section id="story" class="screen">
+    <div class="card story">
+      <div class="icon" id="storyIcon"></div>
+      <h2 id="storyTitle" style="color:var(--gold)"></h2>
+      <p id="storyText"></p>
+      <blockquote id="storyQuote"></blockquote>
+      <div id="boonArea"></div>
+      <div class="center" style="margin-top:16px"><button id="storyBtn">To battle!</button></div>
+    </div>
+  </section>
+
+  <!-- Battle -->
+  <section id="battle" class="screen">
+    <div class="stage-label" id="stageLabel"></div>
+    <div class="card">
+      <div class="arena">
+        <div class="fighter" id="pBox"></div>
+        <div class="vs">VS</div>
+        <div class="fighter" id="eBox"></div>
+      </div>
+      <div class="moves" id="moves"></div>
+      <div class="log" id="log"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------- Utility ----------
+const $ = (id) => document.getElementById(id);
+const rand = (a, b) => a + Math.random() * (b - a);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------- Data: Heroes ----------
+// Each move: cost = prana (energy), cd = cooldown in turns, act(self, foe) performs the effect.
+const HEROES = [
+  {
+    id: 'arjuna', name: 'Arjuna', icon: '🏹', role: 'Archer of the Gandiva',
+    desc: 'Peerless archer, guided by Krishna himself. High burst damage.',
+    hp: 95,
+    moves: [
+      { name: 'Gandiva Shot', cost: 0, cd: 0, desc: 'A swift arrow. 11–15 dmg.',
+        act: (s, f) => hit(s, f, 13) },
+      { name: 'Agneyastra', cost: 4, cd: 2, desc: 'Fire weapon. 16 dmg + Burn (5/turn, 3 turns).',
+        act: (s, f) => { hit(s, f, 16); addStatus(f, 'burn', 3, 5); } },
+      { name: "Krishna's Counsel", cost: 3, cd: 3, desc: 'Heal 18 and gain Fury (+50% dmg, 2 turns).',
+        act: (s) => { heal(s, 18); addStatus(s, 'fury', 2); } },
+      { name: 'Pashupatastra', cost: 9, cd: 5, desc: "Shiva's ultimate weapon. 45 dmg.",
+        act: (s, f) => hit(s, f, 45) },
+    ],
+  },
+  {
+    id: 'bhima', name: 'Bhima', icon: '💪', role: 'Son of Vayu, Wielder of the Mace',
+    desc: 'Strength of ten thousand elephants. Tough and brutal.',
+    hp: 130,
+    moves: [
+      { name: 'Gada Strike', cost: 0, cd: 0, desc: 'Mace blow. 12–16 dmg.',
+        act: (s, f) => hit(s, f, 14) },
+      { name: "Vayu's Fury", cost: 3, cd: 1, desc: 'Two wind-swift blows of 9 dmg.',
+        act: (s, f) => { hit(s, f, 9); hit(s, f, 9); } },
+      { name: 'Iron Body', cost: 3, cd: 3, desc: 'Gain a 25-point shield.',
+        act: (s) => addShield(s, 25) },
+      { name: 'Earth-Shaker', cost: 7, cd: 4, desc: '30 dmg and Stun for 1 turn.',
+        act: (s, f) => { hit(s, f, 30); addStatus(f, 'stun', 1); } },
+    ],
+  },
+  {
+    id: 'yudhishthira', name: 'Yudhishthira', icon: '⚖️', role: 'Dharmaraja, the Just King',
+    desc: 'Never speaks a lie. Durable, weakens foes, grows stronger when wounded.',
+    hp: 110,
+    moves: [
+      { name: 'Spear Thrust', cost: 0, cd: 0, desc: 'Royal spear. 10–14 dmg.',
+        act: (s, f) => hit(s, f, 12) },
+      { name: 'Shield of Dharma', cost: 3, cd: 3, desc: 'Gain 20 shield and heal 10.',
+        act: (s) => { addShield(s, 20); heal(s, 10); } },
+      { name: 'Words of Truth', cost: 4, cd: 3, desc: '10 dmg and Weaken foe (-30% dmg, 3 turns).',
+        act: (s, f) => { hit(s, f, 10); addStatus(f, 'weak', 3); } },
+      { name: 'Righteous Wrath', cost: 8, cd: 4, desc: '25 dmg + 40% of your missing HP.',
+        act: (s, f) => hit(s, f, 25 + 0.4 * (s.maxHp - s.hp)) },
+    ],
+  },
+  {
+    id: 'abhimanyu', name: 'Abhimanyu', icon: '⚔️', role: 'Young Lion, Breaker of the Chakravyuha',
+    desc: "Arjuna's fearless son. Many fast hits that pierce shields.",
+    hp: 90,
+    moves: [
+      { name: 'Swift Arrows', cost: 0, cd: 0, desc: 'Three arrows of 5 dmg.',
+        act: (s, f) => { hit(s, f, 5); hit(s, f, 5); hit(s, f, 5); } },
+      { name: 'Vyuha Breaker', cost: 5, cd: 3, desc: '22 dmg that ignores and shatters shields.',
+        act: (s, f) => { f.shield = 0; hit(s, f, 22); } },
+      { name: "Lion's Roar", cost: 3, cd: 4, desc: 'Fury for 3 turns and +3 prana.',
+        act: (s) => { addStatus(s, 'fury', 3); s.energy = Math.min(s.maxEnergy, s.energy + 3); } },
+      { name: 'Blade Storm', cost: 8, cd: 4, desc: 'Five strikes of 7 dmg.',
+        act: (s, f) => { for (let i = 0; i < 5; i++) hit(s, f, 7); } },
+    ],
+  },
+];
+
+// ---------- Data: Enemies (campaign) ----------
+// ai(self, foe) returns the index of the move to use; default is weighted random among ready moves.
+const ENEMIES = [
+  {
+    name: 'Dushasana', icon: '😈', title: 'The Insulter of Draupadi', hp: 90,
+    story: 'Dushasana, who dragged Draupadi into the court by her hair, charges forward. Bhima\'s vow echoes across the field.',
+    quote: 'You have the right to your action, but never to its fruits. — Bhagavad Gita 2.47',
+    moves: [
+      { name: 'Brutal Mace', w: 5, act: (s, f) => hit(s, f, 10) },
+      { name: 'Mocking Laugh', w: 2, cd: 3, act: (s) => addStatus(s, 'fury', 2) },
+      { name: 'Savage Swing', w: 3, cd: 2, act: (s, f) => hit(s, f, 17) },
+    ],
+  },
+  {
+    name: 'Jayadratha', icon: '🛡️', title: 'King of Sindhu, Blessed by Shiva', hp: 110,
+    story: 'Jayadratha, who sealed the Chakravyuha behind Abhimanyu, stands guarded by Shiva\'s boon. The sun is setting.',
+    quote: 'The soul is never born, nor does it ever die. — Bhagavad Gita 2.20',
+    moves: [
+      { name: 'Sindhu Spear', w: 5, act: (s, f) => hit(s, f, 11) },
+      { name: "Shiva's Boon", w: 3, cd: 3, act: (s) => addShield(s, 25) },
+      { name: 'Ambush', w: 3, cd: 3, act: (s, f) => { hit(s, f, 14); addStatus(f, 'weak', 2); } },
+    ],
+  },
+  {
+    name: 'Bhishma', icon: '🧔', title: 'Grandsire, Granted Death at Will', hp: 160,
+    story: 'Bhishma, the grandsire who swore lifelong celibacy, leads the Kaurava army. None can slay him unless he wills it.',
+    quote: 'Whenever dharma declines, I manifest myself. — Bhagavad Gita 4.7',
+    moves: [
+      { name: 'Rain of Arrows', w: 5, act: (s, f) => { hit(s, f, 5); hit(s, f, 5); hit(s, f, 5); } },
+      { name: 'Iccha Mrityu', w: 0, cd: 5, act: (s) => heal(s, 25) },
+      { name: 'Brahmastra', w: 2, cd: 4, act: (s, f) => hit(s, f, 26) },
+    ],
+    ai: (s) => (s.hp < s.maxHp * 0.5 && ready(s, 1) ? 1 : null),
+  },
+  {
+    name: 'Drona', icon: '📿', title: 'Guru of the Kurus', hp: 150,
+    story: 'Dronacharya, who taught both Pandavas and Kauravas the art of war, now arrays his army in the deadly Chakravyuha.',
+    quote: 'A person is made by their belief. As they believe, so they are. — Bhagavad Gita 17.3',
+    moves: [
+      { name: 'Precise Arrow', w: 5, act: (s, f) => hit(s, f, 13) },
+      { name: 'Chakravyuha', w: 2, cd: 4, act: (s) => { addShield(s, 20); addStatus(s, 'fury', 2); } },
+      { name: 'Brahmashira', w: 2, cd: 4, act: (s, f) => hit(s, f, 28) },
+    ],
+  },
+  {
+    name: 'Karna', icon: '☀️', title: 'Son of Surya, the Generous', hp: 170,
+    story: 'Karna, born with divine armour and earrings, the greatest archer of his age, faces you at last. His loyalty to Duryodhana never wavers.',
+    quote: 'Better is one\'s own dharma, though imperfect, than the dharma of another well performed. — Bhagavad Gita 3.35',
+    moves: [
+      { name: 'Vijaya Bow', w: 5, act: (s, f) => hit(s, f, 14) },
+      { name: 'Kavacha-Kundala', w: 2, cd: 4, act: (s) => addShield(s, 30) },
+      { name: 'Nagastra', w: 2, cd: 3, act: (s, f) => { hit(s, f, 18); addStatus(f, 'burn', 3, 4); } },
+      { name: 'Vasavi Shakti', w: 0, cd: 99, act: (s, f) => hit(s, f, 40) },
+    ],
+    // Karna unleashes Indra's one-time weapon once he is badly wounded.
+    ai: (s) => (s.hp < s.maxHp * 0.4 && ready(s, 3) ? 3 : null),
+  },
+  {
+    name: 'Duryodhana', icon: '👑', title: 'Eldest of the Kauravas', hp: 200,
+    story: 'All his brothers and champions have fallen. Duryodhana rises from the lake, mace in hand, his body made like iron by Gandhari\'s gaze. This is the final battle.',
+    quote: 'Set thy heart upon thy work, but never on its reward. — Bhagavad Gita 2.47',
+    moves: [
+      { name: 'Royal Mace', w: 5, act: (s, f) => hit(s, f, 15) },
+      { name: "Gandhari's Gaze", w: 2, cd: 4, act: (s) => addShield(s, 35) },
+      { name: 'Pride of Kings', w: 2, cd: 3, act: (s) => addStatus(s, 'fury', 2) },
+      { name: 'Last Stand', w: 0, cd: 3, act: (s, f) => hit(s, f, 30) },
+    ],
+    ai: (s) => (s.hp < s.maxHp * 0.3 && ready(s, 3) ? 3 : null),
+  },
+];
+
+const BOONS = [
+  { icon: '❤️', name: 'Blessing of Kunti', desc: '+20 max HP', apply: (h) => { h.maxHp += 20; h.hp += 20; } },
+  { icon: '🔥', name: 'Grace of Agni', desc: '+15% damage', apply: (h) => { h.power += 0.15; } },
+  { icon: '🌬️', name: 'Breath of Vayu', desc: '+1 prana per turn', apply: (h) => { h.regen += 1; } },
+  { icon: '🛡️', name: 'Armour of Indra', desc: 'Start each battle with 15 shield', apply: (h) => { h.startShield += 15; } },
+  { icon: '🪷', name: "Krishna's Lotus", desc: 'Fully restore HP now', apply: (h) => { h.hp = h.maxHp; } },
+];
+
+const STATUS_INFO = {
+  fury: { icon: '🔥', label: 'Fury' },
+  weak: { icon: '🥀', label: 'Weak' },
+  burn: { icon: '♨️', label: 'Burn' },
+  stun: { icon: '💫', label: 'Stun' },
+};
+
+// ---------- State ----------
+let hero = null;      // persists across battles
+let foe = null;       // current enemy
+let stage = 0;
+let busy = false;     // true while animations / enemy turn play
+let actor = null;     // fighter whose move is currently resolving
+
+function makeFighter(base, isPlayer) {
+  return {
+    name: base.name, icon: base.icon, title: base.role || base.title,
+    maxHp: base.hp, hp: base.hp, shield: 0,
+    energy: isPlayer ? 4 : 0, maxEnergy: 10,
+    regen: 3, power: 1, startShield: 0,
+    status: {}, cds: {}, moves: base.moves, ai: base.ai,
+    isPlayer,
+  };
+}
+
+// ---------- Combat mechanics ----------
+function hit(att, def, base) {
+  let mult = att.power;
+  if (att.status.fury) mult *= 1.5;
+  if (att.status.weak) mult *= 0.7;
+  let dmg = base * mult * rand(0.85, 1.15);
+  const crit = Math.random() < 0.1;
+  if (crit) dmg *= 1.5;
+  dmg = Math.max(1, Math.round(dmg));
+
+  let absorbed = Math.min(def.shield, dmg);
+  def.shield -= absorbed;
+  const taken = dmg - absorbed;
+  def.hp = Math.max(0, def.hp - taken);
+
+  pop(def, (crit ? 'CRIT ' : '') + '-' + dmg, 'dmg');
+  shake(def);
+  if (absorbed) log(`🛡️ ${def.name}'s shield absorbs ${absorbed}.`, 's');
+  log(`${att.name} deals ${dmg}${crit ? ' (critical!)' : ''} damage to ${def.name}.`, att.isPlayer ? 'p' : 'e');
+}
+function heal(f, amt) {
+  const before = f.hp;
+  f.hp = Math.min(f.maxHp, f.hp + amt);
+  pop(f, '+' + (f.hp - before), 'heal');
+  log(`${f.name} recovers ${f.hp - before} HP.`, f.isPlayer ? 'p' : 'e');
+}
+function addShield(f, amt) {
+  f.shield += amt;
+  pop(f, '🛡️+' + amt, 'info');
+  log(`${f.name} gains a ${amt}-point shield.`, f.isPlayer ? 'p' : 'e');
+}
+function addStatus(f, key, turns, power) {
+  // Buffs cast on yourself shouldn't tick down at the end of the turn they were cast.
+  f.status[key] = { turns, power, fresh: f === actor };
+  pop(f, STATUS_INFO[key].label, 'info');
+  log(`${f.name} is affected by ${STATUS_INFO[key].label} (${turns} turn${turns > 1 ? 's' : ''}).`, 's');
+}
+function ready(f, i) { return !f.cds[i]; }
+
+// Called at the start of a fighter's turn. Returns false if the fighter is stunned.
+function startTurn(f) {
+  if (f.status.burn) {
+    const d = f.status.burn.power;
+    f.hp = Math.max(0, f.hp - d);
+    pop(f, '♨️-' + d, 'dmg');
+    log(`${f.name} burns for ${d} damage.`, 's');
+  }
+  for (const k in f.cds) if (--f.cds[k] <= 0) delete f.cds[k];
+  if (f.isPlayer) f.energy = Math.min(f.maxEnergy, f.energy + f.regen);
+  const stunned = !!f.status.stun;
+  return !stunned;
+}
+function endTurn(f) {
+  for (const k in f.status) {
+    if (f.status[k].fresh) { f.status[k].fresh = false; continue; }
+    if (--f.status[k].turns <= 0) delete f.status[k];
+  }
+}
+
+// ---------- Rendering ----------
+function fighterHTML(f) {
+  const hpPct = (f.hp / f.maxHp) * 100;
+  const shPct = Math.min(100, (f.shield / f.maxHp) * 100);
+  const sts = Object.entries(f.status)
+    .map(([k, v]) => `<span class="status" title="${STATUS_INFO[k].label}">${STATUS_INFO[k].icon} ${STATUS_INFO[k].label} ${v.turns}</span>`)
+    .join('');
+  return `
+    <div class="icon">${f.icon}</div>
+    <div class="name">${f.name}</div>
+    <div class="title">${f.title}</div>
+    <div class="bar hp">
+      <div class="fill" style="width:${hpPct}%"></div>
+      <div class="shield" style="left:0;width:${shPct}%"></div>
+      <div class="label">❤️ ${f.hp} / ${f.maxHp}${f.shield ? ` &nbsp;🛡️ ${f.shield}` : ''}</div>
+    </div>
+    ${f.isPlayer ? `<div class="bar en"><div class="fill" style="width:${(f.energy / f.maxEnergy) * 100}%"></div>
+      <div class="label">✨ Prana ${f.energy} / ${f.maxEnergy}</div></div>` : ''}
+    <div class="statuses">${sts}</div>`;
+}
+function render() {
+  // Preserve floating numbers by only replacing inner content each render.
+  $('pBox').innerHTML = fighterHTML(hero);
+  $('eBox').innerHTML = fighterHTML(foe);
+  $('stageLabel').textContent = `Battle ${stage + 1} of ${ENEMIES.length}`;
+  $('moves').innerHTML = hero.moves.map((m, i) => {
+    const cd = hero.cds[i];
+    const disabled = busy || hero.energy < m.cost || cd;
+    return `<button class="move" data-i="${i}" ${disabled ? 'disabled' : ''}>
+      <span class="meta">${cd ? `⏳ ${cd}` : `✨ ${m.cost}`}</span>
+      <div class="mname"><kbd>${i + 1}</kbd>${m.name}</div>
+      <div class="mdesc">${m.desc}</div></button>`;
+  }).join('');
+}
+function boxOf(f) { return f.isPlayer ? $('pBox') : $('eBox'); }
+function pop(f, text, cls) {
+  const box = boxOf(f);
+  const el = document.createElement('div');
+  el.className = 'float ' + cls;
+  el.textContent = text;
+  el.style.marginLeft = rand(-30, 30) + 'px';
+  // Floats are added after render so they survive until the next re-render.
+  setTimeout(() => { box.appendChild(el); setTimeout(() => el.remove(), 1100); }, 0);
+}
+function shake(f) {
+  setTimeout(() => {
+    const icon = boxOf(f).querySelector('.icon');
+    if (!icon) return;
+    icon.classList.remove('hit'); void icon.offsetWidth; icon.classList.add('hit');
+  }, 0);
+}
+async function lunge(f) {
+  const icon = boxOf(f).querySelector('.icon');
+  icon.classList.add(f.isPlayer ? 'lunge-right' : 'lunge-left');
+  await sleep(180);
+  icon.classList.remove('lunge-right', 'lunge-left');
+}
+function log(msg, cls = '') {
+  const el = document.createElement('div');
+  el.className = cls;
+  el.textContent = msg;
+  $('log').appendChild(el);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+function show(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+}
+
+// ---------- Flow ----------
+function buildSelect() {
+  $('heroGrid').innerHTML = HEROES.map((h, i) => `
+    <div class="card hero-card" tabindex="0" data-i="${i}">
+      <div class="icon">${h.icon}</div>
+      <h3>${h.name}</h3>
+      <div class="role">${h.role}</div>
+      <p>${h.desc}</p>
+      <p>❤️ ${h.hp} HP</p>
+      <ul>${h.moves.map((m) => `<li><b>${m.name}</b> — ${m.desc}</li>`).join('')}</ul>
+    </div>`).join('');
+  $('heroGrid').querySelectorAll('.hero-card').forEach((c) => {
+    const pick = () => { hero = makeFighter(HEROES[+c.dataset.i], true); stage = 0; showStory(); };
+    c.addEventListener('click', pick);
+    c.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
+  });
+}
+
+function showStory(withBoon = false) {
+  const e = ENEMIES[stage];
+  $('storyIcon').textContent = e.icon;
+  $('storyTitle').textContent = `Battle ${stage + 1}: ${e.name}`;
+  $('storyText').textContent = e.story;
+  $('storyQuote').textContent = e.quote;
+  $('storyQuote').style.display = '';
+  $('storyBtn').textContent = 'To battle!';
+  $('storyBtn').style.display = '';
+  $('storyBtn').onclick = startBattle;
+  $('boonArea').innerHTML = '';
+
+  if (withBoon) {
+    // Offer three random boons; the battle button appears once one is chosen.
+    const choices = [...BOONS].sort(() => Math.random() - 0.5).slice(0, 3);
+    $('storyBtn').style.display = 'none';
+    $('boonArea').innerHTML = `<h3 style="color:var(--saffron)">The gods offer you a boon (❤️ ${hero.hp}/${hero.maxHp})</h3>
+      <div class="grid boons">${choices.map((b, i) => `
+        <button class="boon" data-i="${i}"><div class="icon">${b.icon}</div><b>${b.name}</b><br><small>${b.desc}</small></button>`).join('')}
+      </div>`;
+    $('boonArea').querySelectorAll('.boon').forEach((btn) => {
+      btn.onclick = () => {
+        choices[+btn.dataset.i].apply(hero);
+        $('boonArea').innerHTML = `<p style="color:var(--green)">You received ${choices[+btn.dataset.i].name}. (❤️ ${hero.hp}/${hero.maxHp})</p>`;
+        $('storyBtn').style.display = '';
+      };
+    });
+  }
+  show('story');
+}
+
+function startBattle() {
+  foe = makeFighter(ENEMIES[stage], false);
+  hero.status = {}; hero.cds = {}; hero.energy = 4;
+  hero.shield = hero.startShield;
+  busy = false;
+  $('log').innerHTML = '';
+  log(`🐚 The conch sounds! ${hero.name} faces ${foe.name}.`, 's');
+  show('battle');
+  render();
+}
+
+async function playerMove(i) {
+  const m = hero.moves[i];
+  if (busy || !m || hero.energy < m.cost || hero.cds[i]) return;
+  busy = true;
+  hero.energy -= m.cost;
+  if (m.cd) hero.cds[i] = m.cd + 1; // +1 because cooldowns tick at the start of the next turn
+  log(`➤ ${hero.name} uses ${m.name}!`, 'p');
+  await lunge(hero);
+  actor = hero;
+  m.act(hero, foe);
+  endTurn(hero);
+  render();
+  if (await checkEnd()) return;
+
+  await sleep(800);
+  await enemyTurn();
+}
+
+async function enemyTurn() {
+  const canAct = startTurn(foe);
+  render();
+  if (await checkEnd()) return;
+  if (!canAct) {
+    log(`💫 ${foe.name} is stunned and cannot act!`, 's');
+  } else {
+    let idx = foe.ai ? foe.ai(foe, hero) : null;
+    if (idx == null) {
+      const pool = foe.moves.map((m, i) => ({ m, i })).filter(({ m, i }) => m.w > 0 && ready(foe, i));
+      const total = pool.reduce((a, p) => a + p.m.w, 0);
+      let r = Math.random() * total;
+      idx = pool.find((p) => (r -= p.m.w) < 0).i;
+    }
+    const m = foe.moves[idx];
+    if (m.cd) foe.cds[idx] = m.cd + 1;
+    log(`➤ ${foe.name} uses ${m.name}!`, 'e');
+    await lunge(foe);
+    actor = foe;
+    m.act(foe, hero);
+  }
+  endTurn(foe);
+  render();
+  if (await checkEnd()) return;
+
+  await sleep(500);
+  const heroCanAct = startTurn(hero);
+  busy = false;
+  render();
+  if (await checkEnd()) return;
+  if (!heroCanAct) {
+    log(`💫 ${hero.name} is stunned!`, 's');
+    endTurn(hero);
+    busy = true;
+    await sleep(800);
+    await enemyTurn();
+  }
+}
+
+async function checkEnd() {
+  if (foe.hp <= 0) {
+    busy = true; render();
+    log(`🏆 ${foe.name} has fallen!`, 'p');
+    await sleep(1200);
+    stage++;
+    if (stage >= ENEMIES.length) return victory(), true;
+    hero.hp = Math.min(hero.maxHp, hero.hp + Math.round((hero.maxHp - hero.hp) * 0.5));
+    showStory(true);
+    return true;
+  }
+  if (hero.hp <= 0) {
+    busy = true; render();
+    log(`☠️ ${hero.name} has fallen...`, 'e');
+    await sleep(1200);
+    endScreen('🕯️', 'Defeat', `${hero.name} fell before ${foe.name} in battle ${stage + 1}. But the soul is eternal — rise and fight again.`);
+    return true;
+  }
+  return false;
+}
+
+function victory() {
+  endScreen('🪷', 'Dharma is Restored!',
+    `${hero.name} has defeated all the Kaurava champions. Yudhishthira is crowned king of Hastinapura, and an age of righteousness begins.`);
+}
+function endScreen(icon, title, text) {
+  $('storyIcon').textContent = icon;
+  $('storyTitle').textContent = title;
+  $('storyText').textContent = text;
+  $('storyQuote').style.display = 'none';
+  $('boonArea').innerHTML = '';
+  $('storyBtn').style.display = '';
+  $('storyBtn').textContent = 'Play again';
+  $('storyBtn').onclick = () => show('select');
+  show('story');
+}
+
+// ---------- Input ----------
+$('moves').addEventListener('click', (e) => {
+  const b = e.target.closest('.move');
+  if (b) playerMove(+b.dataset.i);
+});
+document.addEventListener('keydown', (e) => {
+  if ($('battle').classList.contains('active') && /^[1-4]$/.test(e.key)) playerMove(+e.key - 1);
+});
+
+buildSelect();
+</script>
+</body>
+</html>
